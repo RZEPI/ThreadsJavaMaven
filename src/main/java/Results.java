@@ -9,9 +9,13 @@ public class Results {
         }
     }
 
-    public int getResult(int task) {
-        synchronized (lock) {
-            return results.get(task);
+    @Override
+    public String toString()
+    {
+        String output = "";
+        for (Map.Entry<Integer, Integer> entry: this.results.entrySet()) {
+            output = output.concat("Result of thread "+entry.getKey()+":"+entry.getValue()+'\n');
         }
+        return output;
     }
 }

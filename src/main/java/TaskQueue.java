@@ -1,6 +1,8 @@
 import java.util.*;
 public class TaskQueue {
     private Queue<Integer> queue = new LinkedList<>();
+    private List<Thread> threads = new ArrayList<>();
+    private boolean runThreads = true;
     private final int MAX_SIZE = 10;
 
     public synchronized void addTask(int task) {
@@ -20,7 +22,7 @@ public class TaskQueue {
             try {
                 wait();
             } catch (InterruptedException e) {
-                e.printStackTrace();
+                break;
             }
         }
         int task = queue.poll();
@@ -32,35 +34,49 @@ public class TaskQueue {
         return MAX_SIZE;
     }
 
-    public void start(Results res)
+    public void initThreads(Results res)
     {
-        for(int i = 0; i < MAX_SIZE; i++)
+        int currentQueueSize = queue.size();
+        for(int i = 0; i < currentQueueSize; i++)
         {
+            int task = this.getTask();
             Thread th = new Thread(()->{
-               while(true)
+               while(runThreads)
                {
-                   int task = this.getTask();
                    try{
-                       res.addResult(task, compute(task));
+                       res.addResult(task, compute(res, task));
                        System.out.println("Task "+task+" computed");
-                   }catch (InterruptedException e)
+                   }
+                   catch (InterruptedException e)
                    {
+                       Thread.currentThread().interrupt();
+                       System.out.println("Task "+task+" computed");
                        break;
                    }
                }
             });
             th.start();
+            threads.add(th);
             System.out.println(th);
         }
     }
-    private int compute(int task) throws InterruptedException
+
+    private int compute(Results res, int task) throws InterruptedException
     {
-        Thread.sleep(100);
+        Thread.sleep(10000);
         int ret = task;
         if(task % 2 == 0)
             ret*=2;
         else
             ret*=3;
-        return ret;
+        res.addResult(task, ret);
+        throw new InterruptedException();
+    }
+    
+    public void end()
+    {
+        this.runThreads = false;
+        for(Thread th : this.threads)
+            th.interrupt();
     }
 }
