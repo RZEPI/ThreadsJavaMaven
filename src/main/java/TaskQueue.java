@@ -2,8 +2,10 @@ import java.util.*;
 public class TaskQueue {
     private Queue<Integer> queue = new LinkedList<>();
     private List<Thread> threads = new ArrayList<>();
+    private final int N = 10000;
     private boolean runThreads = true;
     private final int MAX_SIZE = 10;
+    private final int TASK_NUM = 4;
 
     public synchronized void addTask(int task) {
         while (queue.size() >= MAX_SIZE) {
@@ -22,7 +24,7 @@ public class TaskQueue {
             try {
                 wait();
             } catch (InterruptedException e) {
-                break;
+                return 0;
             }
         }
         int task = queue.poll();
@@ -36,21 +38,23 @@ public class TaskQueue {
 
     public void initThreads(Results res)
     {
-        int currentQueueSize = queue.size();
-        for(int i = 0; i < currentQueueSize; i++)
+
+    for(int i = 0; i < TASK_NUM; i++)
         {
-            int task = this.getTask();
             Thread th = new Thread(()->{
                while(runThreads)
                {
                    try{
-                       res.addResult(task, compute(res, task));
-                       System.out.println("Task "+task+" computed");
+                       int task = getTask();
+                       if(task != 0) {
+                           compute(res, task);
+                           System.out.println("Task " + task + " computed");
+                       }
                    }
                    catch (InterruptedException e)
                    {
                        Thread.currentThread().interrupt();
-                       System.out.println("Task "+task+" computed");
+                       System.out.println("Thread "+ Thread.currentThread().getName()+" killed");
                        break;
                    }
                }
@@ -61,22 +65,21 @@ public class TaskQueue {
         }
     }
 
-    private int compute(Results res, int task) throws InterruptedException
+    private void compute(Results res, int task) throws InterruptedException
     {
-        Thread.sleep(10000);
-        int ret = task;
-        if(task % 2 == 0)
-            ret*=2;
-        else
-            ret*=3;
-        res.addResult(task, ret);
-        throw new InterruptedException();
+        double pi = 0.;
+        for(int i = 1; i < task+1 && this.runThreads; i++ )
+            pi += Math.pow(-1, i-1)/(2*i-1);
+        pi*=4;
+        Thread.sleep(1000);
+        res.addResult(task, pi);
     }
     
     public void end()
     {
         this.runThreads = false;
-        for(Thread th : this.threads)
+        for (Thread th : threads) {
             th.interrupt();
+        }
     }
 }
