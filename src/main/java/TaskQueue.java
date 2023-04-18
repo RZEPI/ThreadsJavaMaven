@@ -68,9 +68,12 @@ public class TaskQueue {
     private void compute(Results res, int task) throws InterruptedException
     {
         double pi = 0.;
-        for(int i = 1; i < task+1 && this.runThreads; i++ )
-            pi += Math.pow(-1, i-1)/(2*i-1);
-        pi*=4;
+        for(int i = 1; i < task+1 ; i++ ) {
+            pi += Math.pow(-1, i - 1) / (2 * i - 1);
+            if(!this.runThreads)
+                return;
+        }
+            pi*=4;
         Thread.sleep(1000);
         res.addResult(task, pi);
     }
